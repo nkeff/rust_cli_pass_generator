@@ -1,28 +1,49 @@
-mod crypto;
-
 use clap::Parser;
-use crypto::gen_pass;
+use rand::{thread_rng, Rng};
 
 #[derive(Parser)]
 #[clap(
-    about = "CLI парольный менеджер-генератор",
+    about = "Генератор паролей",
     version = "0.1",
     author = "@art"
 )]
 #[command(author, version, about, long_about = None)]
 struct Args  {
-    /// адрес / уникальный идентификатор сайта
-    #[arg(short, long)]
-    login: String,
+    /// длина будущего пароля
+    #[arg(short, long, default_value_t = 16)]
+    length: usize,
 
-    /// мастер пароль
-    #[arg(short, long)]
-    password: String,
+    /// Символы, используемые в пароле (numbers n | upppercase u | lowercase l | symbols s)
+    #[arg(short, long, default_value_t = String::from("nuls"))]
+    include: String,
 }
-
 
 fn main() {
     let args = Args::parse();
-    let salt: String = String::from("some salt string");
-    println!("{}", gen_pass(&args.login, &args.password, &salt));
+    let mut rng = thread_rng();
+    let mut pass_string = String::from("");
+
+    if args.include.contains("n") {
+        pass_string += "0123456789";
+    }
+
+    if args.include.contains("l") {
+        pass_string += "abcdefghijklmnopqrstuvwxyz";
+    }
+
+    if args.include.contains("u") {
+        pass_string += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    }
+
+    if args.include.contains("s") {
+        pass_string += ")(*&^%$#@!~";
+    }
+
+    let password = (0..args.length)
+        .map(|_| {
+            let idx = rng.gen_range(0, pass_string.len());
+            pass_string.chars().nth(idx).unwrap()
+        })
+        .collect::<String>();
+    println!("{}", password);
 }
